@@ -1,10 +1,26 @@
+
+<script context="module">
+	import {browser} from '$app/environment';
+	if (browser) {
+				const socket = new WebSocket("ws://localhost:8000/ws")
+				socket.addEventListener("open", ()=> {
+					console.log("Opened")
+				})
+			}
+
+</script>
+
+
 <script>
 	import Header from './Header.svelte';
 	import './styles.css';
+	
+
+
 </script>
 
 <div class="app">
-	<!-- <Header /> -->
+	<Header />
 
 	<main>
 		<slot />

@@ -6,6 +6,7 @@ import vss
 from pyuac import main_requires_admin
 
 
+# use a shadow copy method so i don't have to close powerpoint if its open
 @main_requires_admin(return_output=False)
 def main():
     file_export = "./powerpoint/defense_export.pptx"
@@ -23,12 +24,8 @@ def main():
     sc = vss.ShadowCopy(local_drives)
     # An open and locked file we want to read
     shadow_path = sc.shadow_path(full_path)
-
-    print(shadow_path)
-
+    # print(shadow_path)
     shutil.copy(shadow_path, file_export)
-
-    print('testing')
 
 
 if __name__ == "__main__":

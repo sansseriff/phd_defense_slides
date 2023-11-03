@@ -2,7 +2,7 @@
 <script>
   import { onMount } from 'svelte';
   import { writable } from 'svelte/store';
-  // <img src="/src/slides_png/slide_2.png" alt="slide_2" width="1000" height="500">
+  // <img src="/slides_png/slide_2.png" alt="slide_2" width="1000" height="500">
 
   const width = writable(0);
   const height = writable(0);
@@ -11,12 +11,12 @@
     height.set(window.innerHeight);
     document.addEventListener('keydown', function(event) {
       //Check if the pressed key is the left arrow key
-      if (event.key === 'ArrowLeft') {
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
         // Navigate to the desired URL when the left arrow key is pressed
         window.location.href = '/slide_1'; // Replace with your desired URL
       }
       //Check if the pressed key is the right arrow key
-      else if (event.key === 'ArrowRight') {
+      else if (event.key === 'ArrowRight' || event.key === 'PageDown') {
         // Navigate to the desired URL when the right arrow key is pressed
         window.location.href = '/slide_3'; // Replace with your desired URL
       }
@@ -25,5 +25,6 @@
 </script>
 
 
-<img src="/src/slides_png/slide_2.png" alt="slide_2" width="{$width}" height="{$height}">
+
+<img src="/slides_png/slide_2.png" alt="slide_2" width="{$width}">
               

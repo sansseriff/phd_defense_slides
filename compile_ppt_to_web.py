@@ -42,7 +42,7 @@ def create_svelte_route(i, ln, routes_directory):
 <script>
   import {{ onMount }} from 'svelte';
   import {{ writable }} from 'svelte/store';
-  // <img src="/src/slides_png/slide_{i}.png" alt="slide_{i}" width="1000" height="500">
+  // <img src="/slides_png/slide_{i}.png" alt="slide_{i}" width="1000" height="500">
 
   const width = writable(0);
   const height = writable(0);
@@ -51,12 +51,12 @@ def create_svelte_route(i, ln, routes_directory):
     height.set(window.innerHeight);
     document.addEventListener('keydown', function(event) {{
       //Check if the pressed key is the left arrow key
-      if (event.key === 'ArrowLeft') {{
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') {{
         // Navigate to the desired URL when the left arrow key is pressed
         window.location.href = '/slide_{prev_slide(i)}'; // Replace with your desired URL
       }}
       //Check if the pressed key is the right arrow key
-      else if (event.key === 'ArrowRight') {{
+      else if (event.key === 'ArrowRight' || event.key === 'PageDown') {{
         // Navigate to the desired URL when the right arrow key is pressed
         window.location.href = '/slide_{next_slide(i, ln)}'; // Replace with your desired URL
       }}
@@ -65,7 +65,8 @@ def create_svelte_route(i, ln, routes_directory):
 </script>
 
 
-<img src="/src/slides_png/slide_{i}.png" alt="slide_{i}" width="{{$width}}" height="{{$height}}">
+
+<img src="/slides_png/slide_{i}.png" alt="slide_{i}" width="{{$width}}">
               
 """
         )
@@ -112,7 +113,7 @@ def run_copy():
 def finish_up():
     run_copy()
     file_export = "./powerpoint/defense_export.pptx"
-    export_path = ".\\web\\defense\\src\\slides_png\\"
+    export_path = ".\\web\\defense\\static\\slides_png\\"
     full_export_path = os.path.abspath(export_path)
 
     full_file_path = os.path.abspath(file_export)
@@ -155,9 +156,8 @@ def finish_up():
         else:
             print("found dynamic slide")
 
-    print("done?")
-    # Application.Quit()
-    Presentation.Close()
+    # Application.Quit() # this closes all instances of powerpoint.
+    Presentation.Close() # this just closes the auto-opened instance
     Presentation = None
     Application = None
 
