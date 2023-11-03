@@ -8,6 +8,7 @@ import vss
 from pyuac import main_requires_admin
 import time
 import subprocess
+import argparse
 
 
 
@@ -25,6 +26,36 @@ def next_slide(number, ln):
         return ln - 1
     
 
+# old
+
+# <script>
+#   import {{ onMount }} from 'svelte';
+#   import {{ writable }} from 'svelte/store';
+#   import {{ goto }} from '$app/navigation';
+#   // <img src="/slides_png/slide_{i}.png" alt="slide_{i}" width="1000" height="500">
+
+#   const width = writable(0);
+#   const height = writable(0);
+#   onMount(() => {{
+#     width.set(window.innerWidth);
+#     height.set(window.innerHeight);
+#     document.addEventListener('keydown', async function(event) {{
+#       //Check if the pressed key is the left arrow key
+#       if (event.key === 'ArrowLeft' || event.key === 'PageUp') {{
+#         // Navigate to the desired URL when the left arrow key is pressed
+#         //window.location.href = '/slide_{prev_slide(i)}'; // Replace with your desired URL
+#         await goto('/slide_{prev_slide(i)}');
+#       }}
+#       //Check if the pressed key is the right arrow key
+#       else if (event.key === 'ArrowRight' || event.key === 'PageDown') {{
+#         // Navigate to the desired URL when the right arrow key is pressed
+#         //window.location.href = '/slide_{next_slide(i, ln)}'; // Replace with your desired URL
+#         await goto('/slide_{next_slide(i, ln)}');
+#       }}
+#     }});
+#   }});
+# </script>
+
 def create_svelte_route(i, ln, routes_directory):
     # I should add a checker here that looks in the route directory
     # if its there and does not overwrite it if theres some keyfile 
@@ -39,31 +70,50 @@ def create_svelte_route(i, ln, routes_directory):
     with open(svelte_path, "w") as f:
         f.write(
             f"""
-<script>
-  import {{ onMount }} from 'svelte';
+<script lang='ts'>
+  import {{ onMount, onDestroy }} from 'svelte';
   import {{ writable }} from 'svelte/store';
-  // <img src="/slides_png/slide_{i}.png" alt="slide_{i}" width="1000" height="500">
+  import {{ goto }} from '$app/navigation';
 
   const width = writable(0);
   const height = writable(0);
+
+  let keydownHandler: (event: KeyboardEvent) => void;
+
   onMount(() => {{
     width.set(window.innerWidth);
     height.set(window.innerHeight);
-    document.addEventListener('keydown', function(event) {{
+
+    keydownHandler = async function(event) {{
+      // Define an async function
+      const navigate = async (url: string, imgSrc: string) => {{
+        const img = new Image();
+        img.src = imgSrc;
+        img.onload = async () => {{
+          await goto(url);
+        }};
+      }}
       //Check if the pressed key is the left arrow key
       if (event.key === 'ArrowLeft' || event.key === 'PageUp') {{
         // Navigate to the desired URL when the left arrow key is pressed
-        window.location.href = '/slide_{prev_slide(i)}'; // Replace with your desired URL
+        navigate('/slide_{prev_slide(i)}', '/slides_png/slide_{prev_slide(i)}.png');
       }}
       //Check if the pressed key is the right arrow key
       else if (event.key === 'ArrowRight' || event.key === 'PageDown') {{
         // Navigate to the desired URL when the right arrow key is pressed
-        window.location.href = '/slide_{next_slide(i, ln)}'; // Replace with your desired URL
+        navigate('/slide_{next_slide(i, ln)}', '/slides_png/slide_{next_slide(i, ln)}.png');
       }}
-    }});
+    }};
+
+    document.addEventListener('keydown', keydownHandler);
+  }});
+
+  onDestroy(() => {{
+    if (typeof window !== 'undefined') {{
+      document.removeEventListener('keydown', keydownHandler);
+    }}
   }});
 </script>
-
 
 
 <img src="/slides_png/slide_{i}.png" alt="slide_{i}" width="{{$width}}">
@@ -106,42 +156,43 @@ export const prerender = true;
 
 #     print('testing')
 
+file_export = "./powerpoint/defense_export.pptx"
+export_path = ".\\web\\defense\\static\\slides_png\\"
+routes_directory = "./web/defense/src/routes/"
+full_export_path = os.path.abspath(export_path)
+
+full_file_path = os.path.abspath(file_export)
 
 def run_copy():
     subprocess.run(["python", "copier.py"])
 
-def finish_up():
+def finish_up(run_copy_flag=True):
+    # if run_copy_flag:
     run_copy()
-    file_export = "./powerpoint/defense_export.pptx"
-    export_path = ".\\web\\defense\\static\\slides_png\\"
-    full_export_path = os.path.abspath(export_path)
-
-    full_file_path = os.path.abspath(file_export)
+        
+    
 
 
     # works
     # ppt=Presentation("/Users/Andrew/defense.pptx")
-    ppt = pptx.Presentation(file_export)
-
-    notes = []
-
-
-
-    # https://stackoverflow.com/questions/61815883/python-pptx-export-img-png-jpeg
-
-
-    Application = client.Dispatch("PowerPoint.Application")
-    Presentation = Application.Presentations.Open(full_file_path)
+    
 
 
 
 
 
     # Define the base directory where you want to create the folders
-    routes_directory = "./web/defense/src/routes/"
+    
 
     # Define the number of folders you want to create
-    # num_folders = 5
+
+    ppt = pptx.Presentation(file_export)
+    notes = []
+    # https://stackoverflow.com/questions/61815883/python-pptx-export-img-png-jpeg
+
+    Application = client.Dispatch("PowerPoint.Application")
+    Presentation = Application.Presentations.Open(full_file_path)
+
 
     # Loop through the range of folder numbers and create each folder
     for i, (note_slide, img_slide) in enumerate(zip(ppt.slides, Presentation.Slides)):
@@ -156,13 +207,43 @@ def finish_up():
         else:
             print("found dynamic slide")
 
+    with open(f"{full_export_path}\\notes.json", "w") as f:
+        f.write(str(notes))
+
+    
+
+    
+
     # Application.Quit() # this closes all instances of powerpoint.
     Presentation.Close() # this just closes the auto-opened instance
     Presentation = None
     Application = None
 
 
+def fix_svelte_routes():
+    with open(f"{full_export_path}\\notes.json", "r") as f:
+        notes = eval(f.read())
+
+    # print(notes)
+
+    for i, note in notes:
+        if "dyno" not in note:
+            create_svelte_route(i, len(notes), routes_directory)
+        else:
+            print("found dynamic slide")
+
+
 if __name__ == "__main__":
 
-    finish_up()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--no-copy", action="store_true", help="Deactivate the run_copy function")
+    args = parser.parse_args()
+
+    # print(not args.no_copy)
+
+    # finish_up(not args.no_copy)
+    if not args.no_copy:
+        finish_up()
+    else:
+        fix_svelte_routes()
 
