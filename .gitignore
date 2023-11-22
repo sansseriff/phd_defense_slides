@@ -7,5 +7,7 @@ web/defense/static/slides_png/*.png
 
 web/defense/src/routes/*
 
+!web/defense/src/routes/dev
+
 !web/defense/src/routes/.gitkeep
 
